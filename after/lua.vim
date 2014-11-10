@@ -5,12 +5,6 @@
 " First Author:	Max Ischenko <mfi 'at' ukr.net>
 " Last Change:	2013 Apr 11
 
-" Only load this indent file when no other was loaded.
-if exists("b:did_indent")
-  finish
-endif
-let b:did_indent = 1
-
 setlocal indentexpr=GetLuaIndent()
 
 " To make Vim call GetLuaIndent() when it finds '\s*end' or '\s*until'
