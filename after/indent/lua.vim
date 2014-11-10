@@ -13,11 +13,6 @@ setlocal indentkeys+=0=end,0=until,0=elseif,0=else,0=:
 
 setlocal autoindent
 
-" Only define the function once.
-if exists("*GetLuaIndent")
-  finish
-endif
-
 function! GetLuaIndent_IndentingKeywordsIndex(line)
     return match(a:line, '^\s*\%(if\>\|for\>\|while\>\|repeat\>\|else\>\|elseif\>\|do\>\|then\>\)')
 endfunction
