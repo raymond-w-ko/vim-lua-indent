@@ -49,7 +49,7 @@ function s:IsBlockBegin(line)
 endfunction
 
 function s:IsBlockEnd(line)
-  if match(a:line, '^\v\s*%(end>|else>|until>|\})') > -1
+  if match(a:line, '^\v\s*%(end>|else>|elseif>|until>|\})') > -1
     return 1
   else
     return 0
