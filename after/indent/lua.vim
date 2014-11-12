@@ -58,7 +58,7 @@ endfunction
 
 function s:GetStringIndent(str)
   let indent = match(a:str, '\S')
-  if indent < 0 then
+  if indent < 0
     let indent = 0
   endif
   return indent
