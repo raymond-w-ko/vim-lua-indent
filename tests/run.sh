@@ -18,14 +18,22 @@ fail()
   echo "$@"
 }
 
+VIM="vim -u NONE -U NONE -i NONE"
+
 for f in *.ok.lua; do
   basename="${f%.ok.lua}"
   INPUT="$basename.in.lua"
   OUTPUT="$basename.OUT.lua"
   COMP="$basename.ok.lua"
 
-  vim -c "normal ggVG420<<" -c "write! $INPUT" -c "qa!" "$COMP"
-  vim -c "normal ggVG=" -c "write! $OUTPUT" -c "qa!" "$INPUT"
+  $VIM -c "normal ggVG420<<" -c "write! $INPUT" -c "qa!" "$COMP"
+  $VIM \
+    -c "set nocompatible" \
+    -c "edit $INPUT" \
+    -c "source ../after/indent/lua.vim" \
+    -c "normal ggVG=" \
+    -c "write! $OUTPUT" \
+    -c "qa!"
   if diff "$COMP" "$OUTPUT" &>/dev/null ; then
     pass $basename
   else
