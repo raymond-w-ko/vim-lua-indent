@@ -3,7 +3,7 @@
 " Modified By: Raymond W. Ko <raymond.w.ko '__@__at@yahoo.com__@__' gmail.com>
 " Maintainer:	Marcus Aurelius Farias <marcus.cf 'at' bol.com.br>
 " First Author:	Max Ischenko <mfi 'at' ukr.net>
-" Last Change:	2013 Apr 11
+" Last Change:	2014 Nov 12
 
 setlocal indentexpr=GetLuaIndent2()
 setlocal autoindent
@@ -49,7 +49,7 @@ function s:IsBlockBegin(line)
 endfunction
 
 function s:IsBlockEnd(line)
-  if match(a:line, '^\s*\%(end\|else\|until\|}\)') > -1
+  if match(a:line, '^\v\s*%(end>|else>|until>|\})') > -1
     return 1
   else
     return 0
