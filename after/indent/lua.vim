@@ -175,8 +175,9 @@ endfunction
 
 function! s:FindFirstUnbalancedParen(lines)
   let balance = 0
-  for line_index in range(len(a:lines) - 1, 0, -1)
-    let line = a:lines[line_index]
+  let line_indent = 0
+  for line_index in range(v:lnum - 1, 0, -1)
+    let line = getline(line_index)
     for i in range(strlen(line) - 1, 0, -1)
       if line[i] == ')'
         let balance += 1
@@ -187,6 +188,11 @@ function! s:FindFirstUnbalancedParen(lines)
         endif
       endif
     endfor
+
+    " turns out it was not unbalanced
+    if balance == 0
+      return s:GetStringIndent(line)
+    endif
   endfor
 
   return 0
@@ -220,20 +226,16 @@ function! GetLuaIndent2()
       " function(
       " ....shiftwidth,
       if match(prev_lines[-1], '\v^.*\(\s*$') > -1
-        return s:GetStringIndent(prev_lines[-1]) + &shiftwidth
+        let indent = s:GetStringIndent(prev_lines[-1]) + &shiftwidth
+      else
+        " function(arg1,
+        " .........X
+        let indent = s:FindFirstUnbalancedParen(prev_lines)
       endif
-
-      " function(arg1,
-      " .........X
-      return s:FindFirstUnbalancedParen(prev_lines)
+    else
+      let indent = s:GetStringIndent(prev_lines[-1])
     endif
-
-    return s:GetStringIndent(prev_lines[-1])
   endif
-
-  "if s:IsTableBegin(prev_lines[-1])
-    "let indent += &shiftwidth
-  "endif
 
   if s:IsBlockEnd(cur_line)
     let indent -= &shiftwidth
