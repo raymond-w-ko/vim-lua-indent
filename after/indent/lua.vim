@@ -25,21 +25,6 @@ function s:IsLineBlank(line)
   endif
 endfunction
 
-function s:PrevNonBlank(line_num)
-  while 1
-    if a:line_num <= 0
-      return 0
-    endif
-
-    let line = getline(a:line_num)
-    if !s:IsLineBlank(line)
-      return a:line_num
-    endif
-
-    let a:line_num -= 1
-  endwhile
-endfunction
-
 function s:IsBlockBegin(line)
   if match(a:line, '\v^\s*%(if>|for>|while>|repeat>|else>|elseif>|do>|then>|function>)\s*') > -1
     return 1
@@ -184,12 +169,16 @@ function! s:FindFirstUnbalancedParen(lines)
       elseif line[i] == '('
         let balance -= 1
         if balance < 0
-          return i + 1
+          if match(line, '\v^.+\(.*<function>' ) > -1
+            return s:GetStringIndent(line) + &shiftwidth
+          else
+            return i + 1
+          endif
         endif
       endif
     endfor
 
-    " turns out it was not unbalanced
+    " turns out it was not so unbalanced
     if balance == 0
       return s:GetStringIndent(line)
     endif
