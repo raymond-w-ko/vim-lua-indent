@@ -173,6 +173,25 @@ function! s:GetPrevLines()
   return lines
 endfunction
 
+function! s:FindFirstUnbalancedParen(lines)
+  let balance = 0
+  for line_index in range(len(a:lines) - 1, 0, -1)
+    let line = a:lines[line_index]
+    for i in range(strlen(line) - 1, 0, -1)
+      if line[i] == ')'
+        let balance += 1
+      elseif line[i] == '('
+        let balance -= 1
+        if balance < 0
+          return i + 1
+        endif
+      endif
+    endfor
+  endfor
+
+  return 0
+endfunction
+
 function! GetLuaIndent2()
   " base case or first line
   if v:lnum - 1 <= 0
@@ -197,17 +216,16 @@ function! GetLuaIndent2()
       let indent += &shiftwidth
     endif
   else
-    " function(arg1,
-    " ..............X
-    if match(prev_lines[-1], '\v^.*\(\s*\S+') > -1
-      let m = matchstr(prev_lines[-1], '\v^.*\(')
-      return strlen(m)
-    endif
+    if !s:IsParenBalanced(prev_lines[-1])
+      " function(
+      " ....shiftwidth,
+      if match(prev_lines[-1], '\v^.*\(\s*$') > -1
+        return s:GetStringIndent(prev_lines[-1]) + &shiftwidth
+      endif
 
-    " function(
-    " ....shiftwidth,
-    if match(prev_lines[-1], '\v^.*\(\s*') > -1
-      return s:GetStringIndent(prev_lines[-1]) + &shiftwidth
+      " function(arg1,
+      " .........X
+      return s:FindFirstUnbalancedParen(prev_lines)
     endif
 
     return s:GetStringIndent(prev_lines[-1])

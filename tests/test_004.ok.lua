@@ -20,6 +20,20 @@ function foo(bar)
               some_var)
 end
 
+function foo(bar)
+    function1(
+        something,
+        bit.bor(1, 2, 4, 8),
+        some_var)
+end
+
+function foo(bar)
+    function1(
+        bit.bor(1, 2, 4, 8),
+        something,
+        some_var)
+end
+
 function ClassName:FunctionName(VariableName)
     local var = func1(something, something2)
     if (something ~= something_else) then

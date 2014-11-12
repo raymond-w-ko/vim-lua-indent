@@ -38,10 +38,7 @@ for f in *.ok.lua; do
     pass $basename
   else
     fail $basename
-    echo -e $GREEN expected: $NORM
-    cat $COMP
-    echo -e $RED got: $NORM
-    cat $OUTPUT
+    diff -rupN $COMP $OUTPUT
     exit 1
   fi
 done
