@@ -26,9 +26,9 @@ end
 function foo(long_variable_name,
              longer_variable_name,
              bar)
-    if (very_very_very_long_condition,
-        more_things,
-        even_more_things) then
+    if (fn(very_very_very_long_condition,
+           more_things,
+           even_more_things)) then
         more_stuff()
     end
 end
@@ -42,3 +42,4 @@ function foo(long_variable_name,
     end
 end
 
+-- vim: et sw=4 sts=4 ts=4

@@ -17,8 +17,8 @@ if exists("*GetLuaIndent2")
   finish
 endif
 
-function s:IsLineBlank(link)
-  if match(line, '\v^\s*$') > -1
+function s:IsLineBlank(line)
+  if match(a:line, '\v^\s*$') > -1
     return 1
   else
     return 0
@@ -41,7 +41,19 @@ function s:PrevNonBlank(line_num)
 endfunction
 
 function s:IsBlockBegin(line)
-    return match(a:line, '^\s*\%(if\>\|for\>\|while\>\|repeat\>\|else\>\|elseif\>\|do\>\|then\>\)')
+  if match(a:line, '\v^\s*%(if>|for>|while>|repeat>|else>|elseif>|do>|then>|function>)\s*') > -1
+    return 1
+  else
+    return 0
+  endif
+endfunction
+
+function s:IsBlockEnd(line)
+  if match(a:line, '^\s*\%(end\|else\|until\|}\)') > -1
+    return 1
+  else
+    return 0
+  endif
 endfunction
 
 function s:GetStringIndent(str)
@@ -52,22 +64,113 @@ function s:GetStringIndent(str)
   return indent
 endfunction
 
-" Get the indent of the previous "line", which can span multiple real lines
-" due to a series of arguments and etc.
-function! s:GetPrevIndent()
+function s:IsParenBalanced(line)
+  let balance = 0
+  for i in range(len(a:line))
+    if a:line[i] == '('
+      let balance += 1
+    elseif a:line[i] == ')'
+      let balance -= 1
+    endif
+  endfor
+  
+  if balance == 0
+    return 1
+  else
+    return 0
+  endif
+endfunction
+
+function s:LinesParenBalanced(lines)
+  let balance = 0
+  for line in a:lines
+    for i in range(len(line))
+      if line[i] == '('
+        let balance += 1
+      elseif line[i] == ')'
+        let balance -= 1
+      endif
+    endfor
+  endfor
+
+  if balance == 0
+    return 1
+  else
+    return 0
+  endif
+endfunction
+
+function s:IsTableBegin(line)
+  if match(a:line, '.*{.*}.*') > -1
+    return 0
+  endif
+
+  if match(a:line, '.*{.*') > -1
+    return 1
+  else
+    return 0
+  endif
+endfunction
+
+function s:HasFuncCall(line)
+  if match(a:line, '\v\S+\(.*') > -1
+    return 1
+  endif
+
+  return 0
+endfunction
+
+" Retrieve the previous relevants lines used to determine indenting.
+"
+" Hopefully most of the times it will be a single line like:
+" ....foo = bar + 1
+" ....foo()
+"
+" But sometimes it can get complicated like:
+" func(arg1,
+" .....arg2,
+" .....arg3,
+"
+" or even
+" if (long_func_call(arg1,
+" ...................arg2,
+" ...................arg3))
+" ....return foo
+" end
+function! s:GetPrevLines()
+  let lines = []
+
   let i = v:lnum - 1
   while 1
+    if i <= 0
+      return 0
+    endif
     let line = getline(i)
+    if s:IsLineBlank(line)
+      let i -= 1
+      continue
+    endif
+
+    call insert(lines, line, 0)
 
     if s:IsBlockBegin(line)
-      return s:GetStringIndent(line)
+      break
     endif
     
-    " part of a function call, or table
+    " part of a function call argument list, or table
     if match(line, '\v^.+,\s*') > -1
+      let i -= 1
+      continue
     endif
+
+    if s:IsParenBalanced(line) || s:IsTableBegin(line) || s:HasFuncCall(line)
+      break
+    endif
+
+    let i -= 1
   endwhile
-  return 4
+
+  return lines
 endfunction
 
 function! GetLuaIndent2()
@@ -76,7 +179,48 @@ function! GetLuaIndent2()
     return 0
   endif
 
-  let indent = s:GetPrevIndent()
+  let cur_line = getline(v:lnum)
+
+  let prev_lines = s:GetPrevLines()
+  let prev_lines_len = len(prev_lines)
+  if prev_lines_len == 0
+    return 0
+  elseif prev_lines_len == 1
+    let indent = s:GetStringIndent(prev_lines[0])
+  else
+    let indent = s:GetStringIndent(prev_lines[0])
+  endif
+
+  " if the previous "line" has a block begin, start a new indent
+  if s:LinesParenBalanced(prev_lines)
+    if s:IsBlockBegin(prev_lines[0]) || s:IsTableBegin(prev_lines[0])
+      let indent += &shiftwidth
+    endif
+  else
+    " function(arg1,
+    " ..............X
+    if match(prev_lines[-1], '\v^.*\(\s*\S+') > -1
+      let m = matchstr(prev_lines[-1], '\v^.*\(')
+      return strlen(m)
+    endif
+
+    " function(
+    " ....shiftwidth,
+    if match(prev_lines[-1], '\v^.*\(\s*') > -1
+      return s:GetStringIndent(prev_lines[-1]) + &shiftwidth
+    endif
+
+    return s:GetStringIndent(prev_lines[-1])
+  endif
+
+  "if s:IsTableBegin(prev_lines[-1])
+    "let indent += &shiftwidth
+  "endif
+
+  if s:IsBlockEnd(cur_line)
+    let indent -= &shiftwidth
+  endif
+
   return indent
 endfunction
 
