@@ -15,7 +15,7 @@ fail()
 for f in *.in.lua; do
   basename="${f%.in.lua}"
   INPUT="$f"
-  OUTPUT="$basename.out.lua"
+  OUTPUT="$basename.OUT.lua"
   COMP="$basename.ok.lua"
   vim -c "normal ggVG=" -c "write $OUTPUT" -c "qa!" "$INPUT"
   if diff "$COMP" "$OUTPUT" >/dev/null; then
