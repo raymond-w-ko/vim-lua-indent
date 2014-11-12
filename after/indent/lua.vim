@@ -17,54 +17,71 @@ if exists("*GetLuaIndent2")
   finish
 endif
 
-function! s:test()
-    return 4
+function s:IsLineBlank(link)
+  if match(line, '\v^\s*$') > -1
+    return 1
+  else
+    return 0
+  endif
+endfunction
+
+function s:PrevNonBlank(line_num)
+  while 1
+    if a:line_num <= 0
+      return 0
+    endif
+
+    let line = getline(a:line_num)
+    if !s:IsLineBlank(line)
+      return a:line_num
+    endif
+
+    let a:line_num -= 1
+  endwhile
+endfunction
+
+function s:IsBlockBegin(line)
+    return match(a:line, '^\s*\%(if\>\|for\>\|while\>\|repeat\>\|else\>\|elseif\>\|do\>\|then\>\)')
+endfunction
+
+function s:GetStringIndent(str)
+  let indent = match(a:str, '\S')
+  if indent < 0 then
+    let indent = 0
+  endif
+  return indent
+endfunction
+
+" Get the indent of the previous "line", which can span multiple real lines
+" due to a series of arguments and etc.
+function! s:GetPrevIndent()
+  let i = v:lnum - 1
+  while 1
+    let line = getline(i)
+
+    if s:IsBlockBegin(line)
+      return s:GetStringIndent(line)
+    endif
+    
+    " part of a function call, or table
+    if match(line, '\v^.+,\s*') > -1
+    endif
+  endwhile
+  return 4
 endfunction
 
 function! GetLuaIndent2()
-  " Find a non-blank line above the current line.
-  let prevlnum = prevnonblank(v:lnum - 1)
-
-  " Hit the start of the file, use zero indent.
-  if prevlnum == 0
+  " base case or first line
+  if v:lnum - 1 <= 0
     return 0
   endif
 
-  " Add a 'shiftwidth' after lines that start a block:
-  " 'function', 'if', 'for', 'while', 'repeat', 'else', 'elseif', '{'
-  let ind = indent(prevlnum)
-  let prevline = getline(prevlnum)
-  let midx = match(prevline, '^\s*\%(if\>\|for\>\|while\>\|repeat\>\|else\>\|elseif\>\|do\>\|then\>\)')
-  if midx == -1
-    let midx = match(prevline, '{\s*$')
-    if midx == -1
-      let midx = match(prevline, '\<function\>\s*\%(\k\|[.:]\)\{-}\s*(')
-    endif
-  endif
-
-  if midx != -1
-    " Add 'shiftwidth' if what we found previously is not in a comment and
-    " an "end" or "until" is not present on the same line.
-    if synIDattr(synID(prevlnum, midx + 1, 1), "name") != "luaComment" && prevline !~ '\<end\>\|\<until\>'
-      let ind = ind + &shiftwidth
-    endif
-  endif
-
-  " Subtract a 'shiftwidth' on end, else (and elseif), until and '}'
-  " This is the part that requires 'indentkeys'.
-  let midx = match(getline(v:lnum), '^\s*\%(end\|else\|until\|}\)')
-  if midx != -1 && synIDattr(synID(v:lnum, midx + 1, 1), "name") != "luaComment"
-    let ind = ind - &shiftwidth
-  endif
-
-  return ind
+  let indent = s:GetPrevIndent()
+  return indent
 endfunction
 
 finish
 
-function! GetLuaIndent_IndentingKeywordsIndex(line)
-    return match(a:line, '^\s*\%(if\>\|for\>\|while\>\|repeat\>\|else\>\|elseif\>\|do\>\|then\>\)')
-endfunction
 function! GetLuaIndent_BeginningFunctionIndex(line)
     return match(a:line, '\<function\>\s*\%(\k\|[.:]\)\{-}\s*(')
 endfunction
