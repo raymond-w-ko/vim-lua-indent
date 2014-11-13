@@ -23,6 +23,16 @@ local comment = [[
  42
 slide]]
 
+if condition == true then
+    local comment = [[
+ asdf
+foobar
+   fizzbuzz
+ quux
+42]]
+    more_computation()
+end
+
 local a = "asdf"
 
 --asdf

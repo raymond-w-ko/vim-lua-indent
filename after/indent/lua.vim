@@ -44,23 +44,22 @@ function s:HasFuncCall(line)
   return a:line =~# '\m\v\S+\(.*'
 endfunction
 
-function s:synnames(...) abort
-  let [line, col] = [a:1, a:2]
-  return join(reverse(map(synstack(line, col), 'synIDattr(v:val,"name")')), ' ')
+function s:synname(...) abort
+  return synIDattr(synID(a:1, a:2, 1), 'name')
 endfunction
 
 function s:IsMultiLineString()
   "if getline('.') =~# '\m\v.*".*'
     "return 0
   "endif
-  return s:synnames(v:lnum, 1) == 'luaString2'
+  return s:synname(v:lnum, 1) == 'luaString2'
 endfunction
 
 function s:IsMultiLineComment()
   if getline('.') =~# '\m\v.*--.*'
     return 0
   endif
-  return s:synnames(v:lnum, 1) == 'luaComment'
+  return s:synname(v:lnum, 1) == 'luaComment'
 endfunction
 
 " TODO: do we have to expand tabs to shiftwidth here?
