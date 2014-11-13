@@ -26,10 +26,15 @@ for f in *.ok.lua; do
   OUTPUT="$basename.OUT.lua"
   COMP="$basename.ok.lua"
 
-  $VIM -c "normal ggVG420<<" -c "write! $INPUT" -c "qa!" "$COMP"
+  if [[ $COMP == comment_* ]]; then
+    $VIM -c "write! $INPUT" -c "qa!" "$COMP"
+  else
+    $VIM -c "normal ggVG420<<" -c "write! $INPUT" -c "qa!" "$COMP"
+  fi
   $VIM \
     -c "set nocompatible" \
     -c "edit $INPUT" \
+    -c "syntax on" \
     -c "source ../after/indent/lua.vim" \
     -c "normal ggVG=" \
     -c "write! $OUTPUT" \

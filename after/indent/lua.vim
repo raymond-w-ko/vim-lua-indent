@@ -44,6 +44,25 @@ function s:HasFuncCall(line)
   return a:line =~# '\m\v\S+\(.*'
 endfunction
 
+function s:synnames(...) abort
+  let [line, col] = [a:1, a:2]
+  return join(reverse(map(synstack(line, col), 'synIDattr(v:val,"name")')), ' ')
+endfunction
+
+function s:IsMultiLineString()
+  "if getline('.') =~# '\m\v.*".*'
+    "return 0
+  "endif
+  return s:synnames(v:lnum, 1) == 'luaString2'
+endfunction
+
+function s:IsMultiLineComment()
+  if getline('.') =~# '\m\v.*--.*'
+    return 0
+  endif
+  return s:synnames(v:lnum, 1) == 'luaComment'
+endfunction
+
 " TODO: do we have to expand tabs to shiftwidth here?
 function s:GetStringIndent(str)
   let indent = match(a:str, '\S')
@@ -162,6 +181,10 @@ function! GetLuaIndent()
   " base case or first line
   if v:lnum - 1 <= 0
     return 0
+  endif
+
+  if s:IsMultiLineString() || s:IsMultiLineComment()
+    return indent(v:lnum)
   endif
 
   let cur_line = getline(v:lnum)
