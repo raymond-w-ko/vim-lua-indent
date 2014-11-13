@@ -1,11 +1,11 @@
 " Vim indent file
 " Language:	Lua script
-" Modified By: Raymond W. Ko <raymond.w.ko '__@__at@yahoo.com__@__' gmail.com>
-" Maintainer:	Marcus Aurelius Farias <marcus.cf 'at' bol.com.br>
+" Maintainer: Raymond W. Ko <raymond.w.ko 'at' gmail.com>
+" Former Maintainer:	Marcus Aurelius Farias <marcus.cf 'at' bol.com.br>
 " First Author:	Max Ischenko <mfi 'at' ukr.net>
-" Last Change:	2014 Nov 12
+" Last Change:	2014 Nov 13
 
-setlocal indentexpr=GetLuaIndent2()
+setlocal indentexpr=GetLuaIndent()
 setlocal autoindent
 
 " To make Vim call GetLuaIndent() when it finds '\s*end' or '\s*until'
@@ -13,57 +13,44 @@ setlocal autoindent
 setlocal indentkeys+=0=end,0=until,0=elseif,0=else,0=:
 
 " Only define the function once.
-if exists("*GetLuaIndent2")
+if (exists("GetLuaIndentVersion") && g:GetLuaIndentVersion == 2)
   finish
 endif
+let g:GetLuaIndentVersion = 2
 
 function s:IsLineBlank(line)
-  if match(a:line, '\v^\s*$') > -1
-    return 1
-  else
-    return 0
-  endif
+  return a:line =~# '\m\v^\s*$'
 endfunction
 
 function s:IsBlockBegin(line)
-  if match(a:line, '\v^\s*%(if>|for>|while>|repeat>|else>|elseif>|do>|then>|function>)\s*') > -1
-    return 1
-  else
-    return 0
-  endif
+  return a:line =~# '\m\v^\s*%(if>|for>|while>|repeat>|else>|elseif>|do>|then>|function>)'
 endfunction
 
 function s:IsBlockEnd(line)
-  if match(a:line, '^\v\s*%(end>|else>|elseif>|until>|\})') > -1
+  return a:line =~# '\m\v^\s*%(end>|else>|elseif>|until>|\})'
+endfunction
+
+function s:IsTableBegin(line)
+  if (a:line =~# '\m.*{.*}.*')
+    return 0
+  elseif (a:line =~# '\m.*{.*')
     return 1
   else
     return 0
   endif
 endfunction
 
+function s:HasFuncCall(line)
+  return a:line =~# '\m\v\S+\(.*'
+endfunction
+
+" TODO: do we have to expand tabs to shiftwidth here?
 function s:GetStringIndent(str)
   let indent = match(a:str, '\S')
   if indent < 0
     let indent = 0
   endif
   return indent
-endfunction
-
-function s:IsParenBalanced(line)
-  let balance = 0
-  for i in range(len(a:line))
-    if a:line[i] == '('
-      let balance += 1
-    elseif a:line[i] == ')'
-      let balance -= 1
-    endif
-  endfor
-  
-  if balance == 0
-    return 1
-  else
-    return 0
-  endif
 endfunction
 
 function s:LinesParenBalanced(lines)
@@ -78,31 +65,11 @@ function s:LinesParenBalanced(lines)
     endfor
   endfor
 
-  if balance == 0
-    return 1
-  else
-    return 0
-  endif
+  return balance == 0
 endfunction
 
-function s:IsTableBegin(line)
-  if match(a:line, '.*{.*}.*') > -1
-    return 0
-  endif
-
-  if match(a:line, '.*{.*') > -1
-    return 1
-  else
-    return 0
-  endif
-endfunction
-
-function s:HasFuncCall(line)
-  if match(a:line, '\v\S+\(.*') > -1
-    return 1
-  endif
-
-  return 0
+function s:IsParenBalanced(line)
+  return s:LinesParenBalanced([a:line])
 endfunction
 
 " Retrieve the previous relevants lines used to determine indenting.
@@ -158,6 +125,10 @@ function! s:GetPrevLines()
   return lines
 endfunction
 
+" Tries the best effor to the find the opening '(' which marks a multi line
+" expression. However, sometimes it well balanced, meaning there is not such
+" opening locally, or such an opening would give too much indent (immediate
+" anonymous function as argument)
 function! s:FindFirstUnbalancedParen(lines)
   let balance = 0
   let line_indent = 0
@@ -187,7 +158,7 @@ function! s:FindFirstUnbalancedParen(lines)
   return 0
 endfunction
 
-function! GetLuaIndent2()
+function! GetLuaIndent()
   " base case or first line
   if v:lnum - 1 <= 0
     return 0
