@@ -110,14 +110,15 @@ endfunction
 function! s:GetPrevLines()
   let lines = []
 
-  let i = v:lnum - 1
+  let i = v:lnum
   while 1
+    let i -= 1
     if i <= 0
       return 0
     endif
+
     let line = getline(i)
     if s:IsLineBlank(line)
-      let i -= 1
       continue
     endif
 
@@ -129,15 +130,12 @@ function! s:GetPrevLines()
     
     " part of a function call argument list, or table
     if match(line, '\v^.+,\s*') > -1
-      let i -= 1
       continue
     endif
 
     if s:IsParenBalanced(line) || s:IsTableBegin(line) || s:HasFuncCall(line)
       break
     endif
-
-    let i -= 1
   endwhile
 
   return lines
