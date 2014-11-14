@@ -53,9 +53,6 @@ function s:synname(...) abort
 endfunction
 
 function s:IsMultiLineString()
-  "if getline('.') =~# '\m\v.*".*'
-    "return 0
-  "endif
   return s:synname(v:lnum, 1) == 'luaString2'
 endfunction
 
