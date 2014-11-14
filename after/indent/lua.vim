@@ -111,6 +111,7 @@ function! s:GetPrevLines()
   let lines = []
 
   let i = v:lnum
+  let multiline_comment = 0
   while 1
     let i -= 1
     if i <= 0
@@ -118,7 +119,20 @@ function! s:GetPrevLines()
     endif
 
     let line = getline(i)
+
+    if multiline_comment
+      if !(line =~# '\m\v.*[[.*')
+        continue
+      else
+        let multiline_comment = 0
+      endif
+    endif
+
     if s:IsLineBlank(line)
+      continue
+    endif
+    if (line =~# '\m\v.*]].*')
+      let multiline_comment = 1
       continue
     endif
 
