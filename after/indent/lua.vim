@@ -44,6 +44,10 @@ function s:HasFuncCall(line)
   return a:line =~# '\m\v\S+\(.*'
 endfunction
 
+function s:IsSingleLineComment(line)
+  return a:line =~# '\m\v.*--.*'
+endfunction
+
 function s:synname(...) abort
   return synIDattr(synID(a:1, a:2, 1), 'name')
 endfunction
@@ -111,7 +115,7 @@ function! s:GetPrevLines()
   let lines = []
 
   let i = v:lnum
-  let multiline_comment = 0
+  let multiline = 0
   while 1
     let i -= 1
     if i <= 0
@@ -120,25 +124,25 @@ function! s:GetPrevLines()
 
     let line = getline(i)
 
-    if multiline_comment
-      if !(line =~# '\m\v.*[[.*')
+    if multiline
+      if !(line =~# '\m\v.*\[\[.*')
         continue
       else
-        let multiline_comment = 0
+        let multiline = 0
       endif
+    endif
+    if (line =~# '\m\v.*\]\].*')
+      let multiline = 1
+      continue
     endif
 
     if s:IsLineBlank(line)
       continue
     endif
-    if (line =~# '\m\v.*]].*')
-      let multiline_comment = 1
-      continue
-    endif
 
     call insert(lines, line, 0)
 
-    if s:IsBlockBegin(line)
+    if s:IsBlockBegin(line) || s:IsSingleLineComment(line)
       break
     endif
     
@@ -155,15 +159,34 @@ function! s:GetPrevLines()
   return lines
 endfunction
 
-" Tries the best effor to the find the opening '(' which marks a multi line
+" Tries the best effort to the find the opening '(' which marks a multi line
 " expression. However, sometimes it well balanced, meaning there is not such
 " opening locally, or such an opening would give too much indent (immediate
 " anonymous function as argument)
 function! s:FindFirstUnbalancedParen(lines)
   let balance = 0
   let line_indent = 0
+  let multiline = 0
+
   for line_index in range(v:lnum - 1, 0, -1)
     let line = getline(line_index)
+
+    if multiline
+      if !(line =~# '\m\v.*\[\[.*')
+        continue
+      else
+        let multiline = 0
+      endif
+    endif
+    if (line =~# '\m\v.*\]\].*')
+      let multiline = 1
+      continue
+    endif
+
+    " remove comments from consideration
+    let line = substitute(line, '\v\m--.*$', '')
+    let line = substitute(line, '\v\m\[\[.*$', '')
+
     for i in range(strlen(line) - 1, 0, -1)
       if line[i] == ')'
         let balance += 1
@@ -216,6 +239,9 @@ function! GetLuaIndent()
       let indent += &shiftwidth
     endif
   else
+    if s:IsSingleLineComment(prev_lines[-1])
+      return s:GetStringIndent(prev_lines[-1])
+    endif
     if !s:IsParenBalanced(prev_lines[-1])
       " function(
       " ....shiftwidth,
