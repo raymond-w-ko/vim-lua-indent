@@ -23,7 +23,15 @@ function s:IsLineBlank(line)
 endfunction
 
 function s:IsBlockBegin(line)
-  return a:line =~# '\m\v^\s*%(if>|for>|while>|repeat>|else>|elseif>|do>|then>|function>)'
+  if a:line =~# '\m\v^\s*%(if>|for>|while>|repeat>|else>|elseif>|do>|then>|function>|local\s*function>)'
+    return 1
+  endif
+
+  if a:line =~# '\m\v^.*\s*\=\s*function>.*'
+    return 1
+  endif
+
+  return 0
 endfunction
 
 function s:IsBlockEnd(line)
@@ -184,6 +192,13 @@ function! s:FindFirstUnbalancedParen(lines)
     let line = substitute(line, '\v\m--.*$', '')
     let line = substitute(line, '\v\m\[\[.*$', '')
 
+    " remove string escape to avoid confusing following regexps
+    let line = substitute(line, '\v\m\\"', '', 'g')
+    let line = substitute(line, '\v\m\\''', '', 'g')
+    " remove strings from consideration
+    let line = substitute(line, '\v\m".\{-}"', '', 'g')
+    let line = substitute(line, '\v\m''.\{-}''', '', 'g')
+
     for i in range(strlen(line) - 1, 0, -1)
       if line[i] == ')'
         let balance += 1
@@ -201,6 +216,9 @@ function! s:FindFirstUnbalancedParen(lines)
 
     " turns out it was not so unbalanced
     if balance == 0
+      if s:IsLineBlank(line)
+        continue
+      endif
       return s:GetStringIndent(line)
     endif
   endfor
