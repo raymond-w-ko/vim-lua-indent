@@ -22,12 +22,29 @@ function s:IsLineBlank(line)
   return a:line =~# '\m\v^\s*$'
 endfunction
 
+function s:FilterStrings(line)
+  let line = a:line
+  " remove string escape to avoid confusing following regexps
+  let line = substitute(line, '\v\m\\"', '', 'g')
+  let line = substitute(line, '\v\m\\''', '', 'g')
+  " remove strings from consideration
+  let line = substitute(line, '\v\m".\{-}"', '', 'g')
+  let line = substitute(line, '\v\m''.\{-}''', '', 'g')
+  return line
+endfunction
+
 function s:IsBlockBegin(line)
   if a:line =~# '\m\v^\s*%(if>|for>|while>|repeat>|else>|elseif>|do>|then>|function>|local\s*function>)'
-    return 1
+    if a:line =~# '\m\v^.*<end>.*'
+      return 0
+    else
+      return 1
+    end
   endif
 
-  if a:line =~# '\m\v^.*\s*\=\s*function>.*'
+  let line = s:FilterStrings(a:line)
+
+  if line =~# '\m\v^.*\s*\=\s*function>.*'
     return 1
   endif
 
@@ -192,12 +209,7 @@ function! s:FindFirstUnbalancedParen(lines)
     let line = substitute(line, '\v\m--.*$', '')
     let line = substitute(line, '\v\m\[\[.*$', '')
 
-    " remove string escape to avoid confusing following regexps
-    let line = substitute(line, '\v\m\\"', '', 'g')
-    let line = substitute(line, '\v\m\\''', '', 'g')
-    " remove strings from consideration
-    let line = substitute(line, '\v\m".\{-}"', '', 'g')
-    let line = substitute(line, '\v\m''.\{-}''', '', 'g')
+    let line = s:FilterStrings(line)
 
     for i in range(strlen(line) - 1, 0, -1)
       if line[i] == ')'
