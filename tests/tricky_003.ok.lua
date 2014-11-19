@@ -11,7 +11,22 @@ here is how to call a Lua function:
 end
 
 if valid then
+    emit("(")
+    save()
+end
+
+if valid then
     emit('(')
+    save()
+end
+
+if valid then
+    emit("\"(")
+    save()
+end
+
+if valid then
+    emit('\'(')
     save()
 end
 
