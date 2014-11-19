@@ -789,7 +789,7 @@ function Compiler.compile_to_ir(datum)
   while head_node.prev do
     head_node = head_node.prev
   end
-  
+
   return head_node
 end
 
