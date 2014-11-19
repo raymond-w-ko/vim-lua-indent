@@ -250,7 +250,9 @@ function! GetLuaIndent()
 
   " if the previous "line" has a block begin, start a new indent
   if s:LinesParenBalanced(prev_lines)
-    if s:IsBlockBegin(prev_lines[0]) || s:IsTableBegin(prev_lines[0])
+    if s:IsSingleLineComment(prev_lines[0])
+      " pass
+    elseif s:IsBlockBegin(prev_lines[0]) || s:IsTableBegin(prev_lines[0])
       let indent += &shiftwidth
     endif
   else
