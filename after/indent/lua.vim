@@ -3,7 +3,7 @@
 " Maintainer: Raymond W. Ko <raymond.w.ko 'at' gmail.com>
 " Former Maintainer:	Marcus Aurelius Farias <marcus.cf 'at' bol.com.br>
 " First Author:	Max Ischenko <mfi 'at' ukr.net>
-" Last Change:	2014 Nov 13
+" Last Change:	2014 Nov 18
 
 setlocal indentexpr=GetLuaIndent()
 setlocal autoindent
