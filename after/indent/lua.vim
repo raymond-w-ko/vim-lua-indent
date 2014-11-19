@@ -25,6 +25,7 @@ endfunction
 function s:FilterStrings(line)
   let line = a:line
   " remove string escape to avoid confusing following regexps
+  let line = substitute(line, '\v\m\\\\', '', 'g')
   let line = substitute(line, '\v\m\\"', '', 'g')
   let line = substitute(line, '\v\m\\''', '', 'g')
   " remove strings from consideration
@@ -56,9 +57,11 @@ function s:IsBlockEnd(line)
 endfunction
 
 function s:IsTableBegin(line)
-  if (a:line =~# '\m.*{.*}.*')
+  let line = s:FilterStrings(a:line)
+
+  if (line =~# '\m.*{.*}.*')
     return 0
-  elseif (a:line =~# '\m.*{.*')
+  elseif (line =~# '\m.*{.*')
     return 1
   else
     return 0
@@ -70,7 +73,7 @@ function s:HasFuncCall(line)
 endfunction
 
 function s:IsSingleLineComment(line)
-  return a:line =~# '\m\v.*--.*'
+  return a:line =~# '\m\v^\s*--.*'
 endfunction
 
 function s:synname(...) abort
@@ -82,7 +85,7 @@ function s:IsMultiLineString()
 endfunction
 
 function s:IsMultiLineComment()
-  if getline('.') =~# '\m\v.*--.*'
+  if getline('.') =~# '\m\v^\s*--.*'
     return 0
   endif
   return s:synname(v:lnum, 1) == 'luaComment'
