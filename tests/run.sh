@@ -26,7 +26,7 @@ for f in *.ok.lua; do
   OUTPUT="$basename.OUT.lua"
   COMP="$basename.ok.lua"
 
-  if [[ $COMP == comment_* ]]; then
+  if [[ $COMP == comment_* || $COMP == tsukuyomi_* ]]; then
     $VIM -c "write! $INPUT" -c "qa!" "$COMP"
   else
     $VIM -c "normal ggVG420<<" -c "write! $INPUT" -c "qa!" "$COMP"
@@ -44,6 +44,6 @@ for f in *.ok.lua; do
   else
     fail $basename
     diff -rupN $COMP $OUTPUT
-    #exit 1
+    exit 1
   fi
 done
