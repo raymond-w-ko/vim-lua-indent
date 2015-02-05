@@ -31,6 +31,7 @@ function s:FilterStrings(line)
   " remove strings from consideration
   let line = substitute(line, '\v\m".\{-}"', '', 'g')
   let line = substitute(line, '\v\m''.\{-}''', '', 'g')
+  let line = substitute(line, '\v\m\[\[.*\]\]', '', 'g')
   return line
 endfunction
 
@@ -148,6 +149,7 @@ function! s:GetPrevLines()
     endif
 
     let line = getline(i)
+    let line = substitute(line, '\v\m\[\[.*\]\]', '', 'g')
 
     if multiline
       if !(line =~# '\m\v.*\[\[.*')
