@@ -92,12 +92,17 @@ function s:IsMultiLineComment()
   return s:synname(v:lnum, 1) == 'luaComment'
 endfunction
 
-" TODO: do we have to expand tabs to shiftwidth here?
 function s:GetStringIndent(str)
-  let indent = match(a:str, '\S')
-  if indent < 0
-    let indent = 0
-  endif
+  let indent = 0
+  for i in range(len(a:str))
+    if a:str[i] == "\t"
+      let indent += &shiftwidth
+    elseif a:str[i] == " "
+      let indent += 1
+    else
+      break
+    endif
+  endfor
   return indent
 endfunction
 
