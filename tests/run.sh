@@ -26,7 +26,7 @@ do_tests()
   REMOVE_INDENT=$2
   INDENT_AMOUNT=''
   if [[ ! -z $3 ]]; then
-    INDENT_AMOUNT="-c set sw=$3 sts=$3 ts=$3 noet"
+    INDENT_AMOUNT="-c 'set sw=$3 sts=$3 ts=$3 noet'"
   fi
 
   for f in $DIRECTORY/*.ok.lua; do
