@@ -24,6 +24,10 @@ do_tests()
 {
   DIRECTORY=$1
   REMOVE_INDENT=$2
+  INDENT_AMOUNT=''
+  if [[ ! -z $3 ]]; then
+    INDENT_AMOUNT="-c set sw=$3 sts=$3 ts=$3 noet"
+  fi
 
   for f in $DIRECTORY/*.ok.lua; do
     basename="${f%.ok.lua}"
@@ -40,6 +44,7 @@ do_tests()
       -c "set nocompatible" \
       -c "edit $INPUT" \
       -c "syntax on" \
+      $INDENT_AMOUNT \
       -c "source ../after/indent/lua.vim" \
       -c "normal ggVG=" \
       -c "write! $OUTPUT" \
@@ -54,6 +59,7 @@ do_tests()
   done
 }
 
-do_tests "basic" 1
-do_tests "basic_passthrough" 0
-do_tests "tsukuyomi" 0
+# do_tests "basic" 1
+# do_tests "basic_passthrough" 0
+# do_tests "tsukuyomi" 0
+do_tests "nmap" 0 2
