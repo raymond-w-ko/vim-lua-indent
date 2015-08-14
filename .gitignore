@@ -1,2 +1,11 @@
-/tests/*.in.lua
-/tests/*.OUT.lua
+/tests/basic/*.in.lua
+/tests/basic/*.OUT.lua
+
+/tests/basic_passthrough/*.in.lua
+/tests/basic_passthrough/*.OUT.lua
+
+/tests/tsukuyomi/*.in.lua
+/tests/tsukuyomi/*.OUT.lua
+
+/tests/nmap/*.in.lua
+/tests/nmap/*.OUT.lua
