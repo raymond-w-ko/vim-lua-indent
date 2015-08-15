@@ -4,6 +4,7 @@
 " Former Maintainer:	Marcus Aurelius Farias <marcus.cf 'at' bol.com.br>
 " First Author:	Max Ischenko <mfi 'at' ukr.net>
 " Last Change:	2015 Aug 14
+" Report Issues At: https://github.com/raymond-w-ko/vim-lua-indent
 
 setlocal indentexpr=GetLuaIndent()
 setlocal autoindent
