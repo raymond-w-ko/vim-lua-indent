@@ -2,7 +2,7 @@ if conditon == true then
     callMyLongFunction(
         nestedFunction(
             argument
-            ))
+    ))
     asdf()
 end
 
@@ -15,24 +15,24 @@ if conditon == true then
     callMyLongFunction(
         nestedFunction(
             argument
-            )
         )
+    )
 end
 
 if conditon == true then
     callMyLongFunction(
         nestedFunction(
             argument
-            )
         )
+    )
 end
 
 if conditon == true then
     callMyLongFunction(
         nestedFunction(
             argument
-            )
         )
+    )
     stuff()
 end
 

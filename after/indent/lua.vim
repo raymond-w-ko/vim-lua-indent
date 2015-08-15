@@ -3,20 +3,20 @@
 " Maintainer: Raymond W. Ko <raymond.w.ko 'at' gmail.com>
 " Former Maintainer:	Marcus Aurelius Farias <marcus.cf 'at' bol.com.br>
 " First Author:	Max Ischenko <mfi 'at' ukr.net>
-" Last Change:	2014 Nov 18
+" Last Change:	2015 Aug 14
 
 setlocal indentexpr=GetLuaIndent()
 setlocal autoindent
 
 " To make Vim call GetLuaIndent() when it finds '\s*end' or '\s*until'
 " on the current line ('else' is default and includes 'elseif').
-setlocal indentkeys+=0=end,0=until,0=elseif,0=else,0=:
+setlocal indentkeys+=0=end,0=until,0=elseif,0=else,0=:,)
 
 " Only define the function once.
-if (exists("GetLuaIndentVersion") && g:GetLuaIndentVersion == 2)
+if exists("g:lua_indent_version") && g:lua_indent_version == 2
   finish
 endif
-let g:GetLuaIndentVersion = 2
+let g:lua_indent_version = 2
 
 function s:IsLineBlank(line)
   return a:line =~# '\m\v^\s*$'
@@ -48,6 +48,8 @@ function s:IsBlockBegin(line)
 
   if line =~# '\m\v^.*\s*\=\s*function>.*'
     return 1
+  elseif line =~# '\m\vreturn\s+function>' && !(line =~# '\m\v<function>.*<end>')
+    return 1
   endif
 
   return 0
@@ -55,6 +57,13 @@ endfunction
 
 function s:IsBlockEnd(line)
   return a:line =~# '\m\v^\s*%(end>|else>|elseif>|until>|\})'
+endfunction
+function s:HasImmediateBlockEnd(line)
+  return a:line =~# '\m\v%(<end>|until>)'
+endfunction
+
+function s:IsAssignmentAndRvalue(line)
+  return a:line =~# '\m\v^\s*\='
 endfunction
 
 function s:IsTableBegin(line)
@@ -125,6 +134,10 @@ function s:IsParenBalanced(line)
   return s:LinesParenBalanced([a:line])
 endfunction
 
+function s:ParenthesizedRvalue(line)
+  return a:line =~# '\m\v\s*\=\s*\(\s*.+'
+endfunction
+
 " Retrieve the previous relevants lines used to determine indenting.
 "
 " Hopefully most of the times it will be a single line like:
@@ -145,12 +158,17 @@ endfunction
 function! s:GetPrevLines()
   let lines = []
 
-  let i = v:lnum
+  let i = line('.')
   let multiline = 0
   while 1
     let i -= 1
     if i <= 0
       return 0
+    endif
+    " $DEITY help you if your function calls span more than 8 lines
+    " avoid O(n^2) problem in long data tables
+    if len(lines) > 8
+      break
     endif
 
     let line = getline(i)
@@ -163,7 +181,9 @@ function! s:GetPrevLines()
         let multiline = 0
       endif
     endif
-    if (line =~# '\m\v.*\]\].*')
+    " consider case where you are indexing with an index that itself is an
+    " index like return nmap.registry.args[argument_frags[2]]
+    if (line =~# '\m\v.*\]\].*') && !(line =~# '\m\v.*\[.+\[.*')
       let multiline = 1
       continue
     endif
@@ -174,7 +194,7 @@ function! s:GetPrevLines()
 
     call insert(lines, line, 0)
 
-    if s:IsBlockBegin(line) || s:IsSingleLineComment(line)
+    if s:IsBlockBegin(line) || s:IsBlockEnd(line) || s:IsSingleLineComment(line)
       break
     endif
     
@@ -189,6 +209,10 @@ function! s:GetPrevLines()
   endwhile
 
   return lines
+endfunction
+" TODO: remove this
+function! LuaGetPrevLines()
+  return s:GetPrevLines()
 endfunction
 
 " Tries the best effort to the find the opening '(' which marks a multi line
@@ -216,8 +240,8 @@ function! s:FindFirstUnbalancedParen(lines)
     endif
 
     " remove comments from consideration
-    let line = substitute(line, '\v\m--.*$', '')
-    let line = substitute(line, '\v\m\[\[.*$', '')
+    let line = substitute(line, '\v\m--.*$', '', 'g')
+    let line = substitute(line, '\v\m\[\[.*$', '', 'g')
 
     let line = s:FilterStrings(line)
 
@@ -248,6 +272,13 @@ function! s:FindFirstUnbalancedParen(lines)
   return 0
 endfunction
 
+function s:NumClosingParentheses(line)
+  if a:line !~# '\v\m^\s*[)]\+\s*$'
+    return 0
+  endif
+  return strlen(substitute(a:line, '\v\m[^\)]', '', 'g'))
+endfunction
+
 function! GetLuaIndent()
   " base case or first line
   if v:lnum - 1 <= 0
@@ -276,12 +307,15 @@ function! GetLuaIndent()
       " pass
     elseif s:IsBlockBegin(prev_lines[0]) || s:IsTableBegin(prev_lines[0])
       let indent += &shiftwidth
+      if s:HasImmediateBlockEnd(prev_lines[0])
+        let indent -= &shiftwidth
+      endif
     endif
   else
     if s:IsSingleLineComment(prev_lines[-1])
       return s:GetStringIndent(prev_lines[-1])
     endif
-    if !s:IsParenBalanced(prev_lines[-1])
+    if !s:ParenthesizedRvalue(prev_lines[-1]) && !s:IsParenBalanced(prev_lines[-1])
       " function(
       " ....shiftwidth,
       if match(prev_lines[-1], '\v^.*\(\s*$') > -1
@@ -299,6 +333,10 @@ function! GetLuaIndent()
   if s:IsBlockEnd(cur_line)
     let indent -= &shiftwidth
   endif
+  if s:IsAssignmentAndRvalue(cur_line)
+    let indent += &shiftwidth
+  endif
+  let indent -= s:NumClosingParentheses(cur_line) * &shiftwidth
 
   return indent
 endfunction

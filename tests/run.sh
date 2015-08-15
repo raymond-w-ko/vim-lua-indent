@@ -39,7 +39,7 @@ do_tests()
     fi
     if [[ -n $3 ]]; then
       $VIM \
-        -c "set nocompatible" \
+        -c "set nocompatible lazyredraw" \
         -c "edit $INPUT" \
         -c "syntax on" \
         -c "source ../after/indent/lua.vim" \
@@ -49,7 +49,7 @@ do_tests()
         -c "qa!"
     else
       $VIM \
-        -c "set nocompatible" \
+        -c "set nocompatible lazyredraw" \
         -c "edit $INPUT" \
         -c "syntax on" \
         -c "source ../after/indent/lua.vim" \
@@ -65,7 +65,7 @@ do_tests()
       echo "$OUTPUT" >> $LOG
       echo "$COMP" >> $LOG
       diff -rupN $COMP $OUTPUT >> $LOG
-      if [[ -e $4 ]]; then
+      if [[ -z $4 ]]; then
         exit 1
       fi
     fi
