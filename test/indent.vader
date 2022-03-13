@@ -1,0 +1,30 @@
+Before:
+  setlocal expandtab shiftwidth=4 tabstop=4
+
+Given lua (long if statement):
+  if hasTaste()
+    and lovesTaste()
+    and gottaHaveIt()
+  then
+    eatIt()
+    if true then
+      print("ate")
+    end
+    if false then print("printed ate") end
+  end
+
+Do (reindent):
+  gg=G
+
+Expect lua (solitary 'then' unindented):
+  if hasTaste()
+      and lovesTaste()
+      and gottaHaveIt()
+  then
+      eatIt()
+      if true then
+          print("ate")
+      end
+      if false then print("printed ate") end
+  end
+

@@ -216,6 +216,15 @@ function! LuaGetPrevLines()
   return s:GetPrevLines()
 endfunction
 
+" Find line above 'lnum' that matches pattern 'pat'.
+function! s:FindPrevious(lnum, pat) abort
+  let lnum = prevnonblank(a:lnum)
+  while getline(lnum) !~# a:pat
+    let lnum = prevnonblank(lnum - 1)
+  endwhile
+  return lnum
+endf
+
 " Tries the best effort to the find the opening '(' which marks a multi line
 " expression. However, sometimes it well balanced, meaning there is not such
 " opening locally, or such an opening would give too much indent (immediate
@@ -280,6 +289,11 @@ function s:NumClosingParentheses(line)
   return strlen(substitute(a:line, '\v\m[^\)]', '', 'g'))
 endfunction
 
+" A 'then' on a line by itself
+function! s:IsSolitaryThen(line) abort
+  return a:line =~# '\v^\s*then\s*$'
+endf
+
 function! GetLuaIndent()
   " base case or first line
   if v:lnum - 1 <= 0
@@ -300,6 +314,15 @@ function! GetLuaIndent()
     let indent = s:GetStringIndent(prev_lines[0])
   else
     let indent = s:GetStringIndent(prev_lines[0])
+  endif
+
+  if s:IsSolitaryThen(cur_line)
+    " Only dependent on indent of matching if.
+    return s:GetStringIndent(getline(s:FindPrevious(v:lnum, '^\s*if\>')))
+  endif
+  if s:IsSolitaryThen(prev_lines[-1])
+    " Only dependent on previous line.
+    return s:GetStringIndent(prev_lines[-1]) + &shiftwidth
   endif
 
   " if the previous "line" has a block begin, start a new indent
