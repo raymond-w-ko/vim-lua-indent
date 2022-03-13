@@ -19,6 +19,8 @@ if exists("g:lua_indent_version") && g:lua_indent_version == 2
 endif
 let g:lua_indent_version = 2
 
+let g:lua_indent_align_params = get(g:, 'lua_indent_align_params', 1)
+
 function s:IsLineBlank(line)
   return a:line =~# '\m\v^\s*$'
 endfunction
@@ -102,6 +104,7 @@ function s:IsMultiLineComment()
   return s:synname(v:lnum, 1) == 'luaComment'
 endfunction
 
+" Amount of indent the input string contains.
 function s:GetStringIndent(str)
   let indent = 0
   for i in range(len(a:str))
@@ -115,6 +118,20 @@ function s:GetStringIndent(str)
   endfor
   return indent
 endfunction
+
+" Amount of indent required to match input characters.
+function s:GetIndentForChars(str)
+  let indent = 0
+  for i in range(len(a:str))
+    if a:str[i] == "\t"
+      let indent += &shiftwidth
+    else
+      let indent += 1
+    endif
+  endfor
+  return indent
+endfunction
+
 
 function s:LinesParenBalanced(lines)
   let balance = 0
@@ -252,10 +269,10 @@ function! s:FindFirstUnbalancedParen(lines)
       elseif line[i] == '('
         let balance -= 1
         if balance < 0
-          if match(line, '\v^.+\(.*<function>' ) > -1
+          if !g:lua_indent_align_params || (match(line, '\v^.+\(.*<function>' ) > -1)
             return s:GetStringIndent(line) + &shiftwidth
           else
-            return i + 1
+            return s:GetIndentForChars(line[:i])
           endif
         endif
       endif
