@@ -19,6 +19,8 @@ if exists("g:lua_indent_version") && g:lua_indent_version == 2
 endif
 let g:lua_indent_version = 2
 
+let g:lua_indent_align_params = get(g:, 'lua_indent_align_params', 1)
+
 function s:IsLineBlank(line)
   return a:line =~# '\m\v^\s*$'
 endfunction
@@ -267,7 +269,7 @@ function! s:FindFirstUnbalancedParen(lines)
       elseif line[i] == '('
         let balance -= 1
         if balance < 0
-          if match(line, '\v^.+\(.*<function>' ) > -1
+          if !g:lua_indent_align_params || (match(line, '\v^.+\(.*<function>' ) > -1)
             return s:GetStringIndent(line) + &shiftwidth
           else
             return s:GetIndentForChars(line[:i])
